@@ -1,0 +1,24 @@
+clc; clear; close all;
+% Set the video information
+% videoSequence = 'sampleQCIF.yuv';
+videoSequence = 'news_qcif.yuv';
+%videoSequence = 'foreman_qcif.yuv'; 
+% videoSequence = 'carphone_qcif.yuv'; 
+%videoSequence='bridge-close_qcif.yuv';
+%videoSequence = 'stefan_cif.yuv'; 
+%videoSequence = 'foreman_qcif.yuv'; 
+%videoSequence ='akiyo_qcif.yuv';
+% grandma_qcif
+% bridge-far_cif
+% grandma_qcif
+%bridge-close_cif
+%akiyo_qcif
+
+width  = 176;
+height = 144;
+nFrame = 300;
+% nFrame = 90;
+
+% Read the video sequence
+[Y,U,V] = yuvRead(videoSequence, width, height ,nFrame); 
+Y=double(Y);
