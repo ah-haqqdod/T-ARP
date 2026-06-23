@@ -1,0 +1,110 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{crimson2143940}{RGB}{214,39,40}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{forestgreen4416044}{RGB}{44,160,44}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{mediumpurple148103189}{RGB}{148,103,189}
+\definecolor{orchid227119194}{RGB}{227,119,194}
+\definecolor{sienna1408675}{RGB}{140,86,75}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+title={Execution Time – Lower is better},
+x grid style={darkgray176},
+xlabel={# Slices},
+xmajorgrids,
+xmin=5.5, xmax=104.5,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Execution Time (s)},
+ymajorgrids,
+ymin=-0.00085248897473017, ymax=0.758396360774835,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0944989919662476
+20 0.108968844016393
+40 0.150531103213628
+60 0.236512541770935
+80 0.338435600201289
+100 0.445709019899368
+};
+\addlegendentry{ARP T-CUR}
+\addplot [thick, darkorange25512714, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.650803248087565
+20 0.654934068520864
+40 0.519592692454656
+60 0.502818783124288
+80 0.517380873362223
+100 0.557298521200816
+};
+\addlegendentry{T-SVD}
+\addplot [thick, forestgreen4416044, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0336588223775228
+20 0.0346478919188182
+40 0.0669402678807576
+60 0.0801291167736053
+80 0.261053850253423
+100 0.137358039617538
+};
+\addlegendentry{T Uniform Sampling}
+\addplot [thick, crimson2143940, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0383699337641398
+20 0.0416797300179799
+40 0.0658429165681203
+60 0.0873155693213145
+80 0.107052743434906
+100 0.114303588867188
+};
+\addlegendentry{T Lengths Squared Sampling}
+\addplot [thick, mediumpurple148103189, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0624112884203593
+20 0.0807851751645406
+40 0.129553437232971
+60 0.171483705441157
+80 0.262848238150279
+100 0.305087357759476
+};
+\addlegendentry{T Leverage Scores Sampling}
+\addplot [thick, sienna1408675, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0691279371579488
+20 0.116870244344076
+40 0.218290150165558
+60 0.316943754752477
+80 0.452854206164678
+100 0.68895548582077
+};
+\addlegendentry{T-ARP}
+\addplot [thick, orchid227119194, mark=diamond*, mark size=2, mark options={solid}]
+table {%
+10 0.0895169377326965
+20 0.140695999066035
+40 0.305990209182103
+60 0.329878717660904
+80 0.557929595311483
+100 0.723885049422582
+};
+\addlegendentry{T-ARP (Householder)}
+\end{axis}
+
+\end{tikzpicture}

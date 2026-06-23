@@ -1,0 +1,113 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{crimson2143940}{RGB}{214,39,40}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{forestgreen4416044}{RGB}{44,160,44}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{mediumpurple148103189}{RGB}{148,103,189}
+\definecolor{orchid227119194}{RGB}{227,119,194}
+\definecolor{sienna1408675}{RGB}{140,86,75}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.03)},
+  anchor=south west,
+  draw=lightgray204
+},
+log basis y={10},
+minor ytick={0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,2,3,4,5,6,7,8,9,20,30,40,50,60,70,80,90},
+tick align=outside,
+tick pos=left,
+title={Reconstruction Relative Error – Lower is better},
+x grid style={darkgray176},
+xlabel={# Slices},
+xmajorgrids,
+xmin=5.5, xmax=104.5,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Relative Error (log scale)},
+ymajorgrids,
+ymin=0.0591915555001068, ymax=0.38777519120125,
+ymode=log,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.356020129596194
+20 0.337659498055776
+40 0.306910593062639
+60 0.284844446306427
+80 0.262689167633653
+100 0.241837318986654
+};
+\addlegendentry{ARP T-CUR}
+\addplot [thick, darkorange25512714, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.170598464707534
+20 0.137343332637101
+40 0.105963672356059
+60 0.0878202746001383
+80 0.0747610862211635
+100 0.0644711207132787
+};
+\addlegendentry{T-SVD}
+\addplot [thick, forestgreen4416044, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.285919157788157
+20 0.235063451963166
+40 0.192464589141309
+60 0.169553715735674
+80 0.148355993131797
+100 0.132863734072695
+};
+\addlegendentry{T Uniform Sampling}
+\addplot [thick, crimson2143940, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.28248416321973
+20 0.237273694636921
+40 0.193519385221104
+60 0.167273416804771
+80 0.148586356081069
+100 0.1337698980545
+};
+\addlegendentry{T Lengths Squared Sampling}
+\addplot [thick, mediumpurple148103189, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.285727869098385
+20 0.233320271285872
+40 0.188331223092973
+60 0.16146102702866
+80 0.142014463742574
+100 0.126782244692246
+};
+\addlegendentry{T Leverage Scores Sampling}
+\addplot [thick, sienna1408675, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.273407878354192
+20 0.223778573175271
+40 0.175453194417059
+60 0.14850951746727
+80 0.129976839292794
+100 0.114715277372549
+};
+\addlegendentry{T-ARP}
+\addplot [thick, orchid227119194, mark=triangle*, mark size=2, mark options={solid}]
+table {%
+10 0.273407878354192
+20 0.223778573175271
+40 0.174234554482003
+60 0.148074719899644
+80 0.129891233363499
+100 0.114825313755622
+};
+\addlegendentry{T-ARP (Householder)}
+\end{axis}
+
+\end{tikzpicture}

@@ -1,0 +1,110 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{crimson2143940}{RGB}{214,39,40}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{forestgreen4416044}{RGB}{44,160,44}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{mediumpurple148103189}{RGB}{148,103,189}
+\definecolor{orchid227119194}{RGB}{227,119,194}
+\definecolor{sienna1408675}{RGB}{140,86,75}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+title={Structural Similarity Index (SSIM) – Higher is better},
+x grid style={darkgray176},
+xlabel={# Slices},
+xmajorgrids,
+xmin=5.5, xmax=104.5,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={SSIM},
+ymajorgrids,
+ymin=0.364917129402359, ymax=0.867174548283219,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.388769124945005
+20 0.387747012078762
+40 0.399977422008912
+60 0.417672988027334
+80 0.442852973937988
+100 0.473199142764012
+};
+\addlegendentry{ARP T-CUR}
+\addplot [thick, darkorange25512714, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.588894231865803
+20 0.642760841796795
+40 0.717834124962489
+60 0.770842644075553
+80 0.811560814579328
+100 0.844344665606817
+};
+\addlegendentry{T-SVD}
+\addplot [thick, forestgreen4416044, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.433384296173851
+20 0.469417835896214
+40 0.520976468920708
+60 0.562660789738099
+80 0.607623092830181
+100 0.647450782358646
+};
+\addlegendentry{T Uniform Sampling}
+\addplot [thick, crimson2143940, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.436861386522651
+20 0.46690322086215
+40 0.517180266479651
+60 0.561562772840261
+80 0.602725538114707
+100 0.640738166868687
+};
+\addlegendentry{T Lengths Squared Sampling}
+\addplot [thick, mediumpurple148103189, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.426177632684509
+20 0.461057818184296
+40 0.516856403400501
+60 0.56579469765226
+80 0.610565390437841
+100 0.650316687921683
+};
+\addlegendentry{T Leverage Scores Sampling}
+\addplot [thick, sienna1408675, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.417871937155724
+20 0.45634788274765
+40 0.523445436110099
+60 0.576271312932173
+80 0.623254435757796
+100 0.666476175189018
+};
+\addlegendentry{T-ARP}
+\addplot [thick, orchid227119194, mark=*, mark size=2, mark options={solid}]
+table {%
+10 0.417871937155724
+20 0.45634788274765
+40 0.525119020293156
+60 0.577024425069491
+80 0.623419813811779
+100 0.666212603449821
+};
+\addlegendentry{T-ARP (Householder)}
+\end{axis}
+
+\end{tikzpicture}
