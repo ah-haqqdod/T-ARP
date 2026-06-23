@@ -1,0 +1,24 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "t_arp"
+version = "0.1.0"
+dependencies = [
+    "equinox",
+    "tqdm",
+    "numpy",
+    "jax",
+    "chex",
+    "jaxlib",
+    "Pillow",
+    "yuvio",
+    "fastparquet",
+    "pyarrow",
+    "pandas",
+    "matplotlib",
+    "matplot2tikz",
+    "Jinja2"
+]
