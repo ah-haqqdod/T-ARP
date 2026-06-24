@@ -14,7 +14,6 @@ from t_arp.benchmark import KodakBenchmark, save_metrics
 from t_arp.matrix import RSVD, ARP_params, CSS_module_factory
 from t_arp.tubal import (
     TARP,
-    FastTARP,
     TCSSBaselines,
     TMatrix,
     TMatrixTOnly,
