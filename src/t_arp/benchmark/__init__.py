@@ -6,7 +6,6 @@ from t_arp.benchmark.metrics import (
 )
 from t_arp.benchmark.utils import (
     KodakDataLoader,
-    _save_reconstruction,
     load_metrics,
     plot_figures,
     png_to_tensor,

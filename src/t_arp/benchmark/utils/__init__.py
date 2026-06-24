@@ -1,7 +1,6 @@
 # from t_arp.benchmark.utils.aggregate_tables import create_summary_tables
 from t_arp.benchmark.utils.kodak import (
     KodakDataLoader,
-    _save_reconstruction,
     png_to_tensor,
 )
 from t_arp.benchmark.utils.metrics_io import load_metrics, save_metrics
