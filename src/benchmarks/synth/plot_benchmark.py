@@ -1,6 +1,5 @@
 import os
 
-import pandas as pd
 from standalone_benchmark import SAVE_PATH
 
 from t_arp.benchmark import load_metrics, plot_figures

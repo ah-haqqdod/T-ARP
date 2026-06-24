@@ -4,11 +4,8 @@ from typing import List, Optional, Sequence, Tuple
 
 import chex
 import jax
-import metrax
 import numpy as np
 from jax import numpy as jnp
-
-# from PIL import Image
 from tqdm import tqdm
 
 from t_arp.benchmark import (
@@ -36,22 +33,6 @@ METHODS_MAP = {
     "T-ARP (Householder)": "householder",
 }
 
-# METHODS = [
-#     "uniform",
-#     "leverage_scores",
-#     # "orth_proj_pinv",
-#     # "orth_proj_normalized",
-#     "householder",
-# ]
-# METHODS = [
-#     "uniform",
-# ]
-# N_SLICES_LIST = [15, 25, 50, 75, 100]
-
-
-# N_SLICES_LIST = [21, 42, 63]
-# N_SLICES_LIST = [10, 20, 30, 40, 50, 60]
-# N_SLICES_LIST = [10, 50]
 N_SLICES_LIST = [50]
 SEED = 42
 N_TRIALS = 1
@@ -60,10 +41,12 @@ DATA_DTYPE = jnp.uint8
 SAVE_RECONSTRUCTIONS = True
 USE_RSVD = True
 
-VIDEO_PATH = "datasets/yuv_video/Video/stefan_cif.yuv"
-WIDTH = 352  # QCIF width
-HEIGHT = 288  # QCIF height
-FRAMES = 90
+VIDEO_DIR = "datasets/yuv_video/Video/"
+VIDEO_NAME = "waterfall_cif"
+VIDEO_PATH = os.path.join(VIDEO_DIR, f"{VIDEO_NAME}.yuv")
+
+WIDTH = 176 if VIDEO_NAME.endswith("qcif") else 352  # QCIF width
+HEIGHT = 144 if VIDEO_NAME.endswith("qcif") else 288  # QCIF height
 FRAMERATE = 25
 SAVE_PATH = "src/benchmarks/yuv/results/"
 
@@ -88,7 +71,7 @@ def load_yuv_tensor() -> chex.Array:
     # SAVE ORIGINAL VIDEO
     yuv_to_mp4_ffmpeg(
         VIDEO_PATH,
-        SAVE_PATH + "video_org.mp4",
+        SAVE_PATH + f"{VIDEO_NAME}_org.mp4",
         WIDTH,
         HEIGHT,
         FRAMERATE,
@@ -116,7 +99,7 @@ def save_reconstruction(M_recon, method, n_slices):
 
     yuv_to_mp4_ffmpeg(
         file_path,
-        os.path.join(method_path, f"rec_{n_slices}.mp4"),
+        os.path.join(method_path, f"{VIDEO_NAME}_{n_slices}.mp4"),
         WIDTH,
         HEIGHT,
         FRAMERATE,
