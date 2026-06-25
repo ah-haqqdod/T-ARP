@@ -91,7 +91,7 @@ The instruction for how to run the experiments is provided in `src/benchmarks/re
 
 The T-Matrix module (`src/t_arp/tubal/t_matrix.py`) is used to define the interface for working with tensor structures subject to `t-product`. The name `T-Matrix` stands for `Tubal Matrix`, which has a matrix-like structure, but each element is an array, e.g., a vector representing RGB values of a pixel.
 
-The usage of the `TMatrix` structure, the `T-ARP` algorithms, and other methods are demonstrated in the `t_arp/` directory.
+The usage of the `TMatrix` structure, the `T-ARP` algorithms, and other methods are demonstrated in the `src/t_arp/` directory.
 
 ---
 
