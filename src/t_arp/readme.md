@@ -70,7 +70,7 @@ I = TMatrix.eye(shape=(64, 64, 3), dtype=jnp.float32)
 
 ### t-product (`@`)
 
-The `@` operator computes the **t-product** — the canonical matrix product for tubal matrices, defined via face-wise multiplication of the Fourier-domain frontal slices.
+The `@` operator computes the **t-product** defined via face-wise multiplication of the Fourier-domain frontal slices.
 
 ```python
 key = jax.random.PRNGKey(0)
