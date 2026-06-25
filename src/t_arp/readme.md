@@ -183,9 +183,9 @@ J = baseline_ls(subkey, A)
 
 ### `t_cross` — Common-Index Tubal Cross-Approximation
 
-`t_cross` selects both a column subset `J` and a row subset `I` and returns the CUR decomposition `A ≈ A_J @ W @ A_I`.
+`t_cross` selects both a lateral slice subset `J` and a horizontal slice subset `I` and returns the common-index CUR decomposition `A ≈ A_J @ W @ A_I`.
 
-By passing `use_intersection=True`, `t_cross` will select the intersection of `A(I, J, :)^+` as the middle matrix `W`; otherwise `W = A(I, :, :)^+ @ A @ A(:, J, :)^+`.
+By passing `use_intersection=True`, `t_cross` will select the intersection `A(I, J, :)^+` as the middle tensor `W`; otherwise `W = A(I, :, :)^+ @ A @ A(:, J, :)^+`.
 
 ```python
 from functools import partial
@@ -221,7 +221,8 @@ print(f"Relative error: {rel_err:.2e}")
 
 ### `t_cur` — Tubal Cross-Approximation without Common-Index Guarantee
 
-`t_cur` runs a CUR cross-approximation **independently on every frontal slice** in the Fourier domain. Because each slice selects its own row and column indices, the selected physical rows and columns are generally *different* per channel — hence there is no common-index guarantee across channels. This is in contrast to `t_cross`, which selects the same row/column indices across all channels.
+`t_cur` runs a CUR cross-approximation **independently on every frontal slice** in the Fourier domain; each slice selects its own row and column indices (no common-index guarantee).
+This is in contrast to `t_cross`, which selects horizontal and lateral slice indices of the tensor.
 
 The method accepts any `CSS_module` from `t_arp.matrix`, so the per-slice selector (ARP, leverage scores, uniform) can be swapped freely.
 
