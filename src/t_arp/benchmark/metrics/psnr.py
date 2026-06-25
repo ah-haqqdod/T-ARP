@@ -1,4 +1,4 @@
-# modification of metrax psnr implementation. from modularized implementation to pure functions.
+# modification of metrax psnr implementation. from modularized implementation to pure functions. Source: https://github.com/google/metrax
 
 r"""PSNR (Peak Signal-to-Noise Ratio)  Metric.
 
@@ -17,8 +17,6 @@ Where:
 """
 
 import chex
-import jax
-from jax import lax
 from jax import numpy as jnp
 
 from t_arp.benchmark.metrics.utils import validate_shapes

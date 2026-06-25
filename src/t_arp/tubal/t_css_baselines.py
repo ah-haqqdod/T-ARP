@@ -2,13 +2,11 @@
 from dataclasses import dataclass
 from typing import Literal
 
-import chex
 import equinox as eqx
 import jax
 from jax import numpy as jnp
 
-# from t_arp.tubal import TMatrix, TMatrixTOnly
-from t_arp.tubal.t_matrix import TMatrix, TMatrixAbstract, TMatrixTOnly
+from t_arp.tubal.t_matrix import TMatrix
 
 
 @dataclass

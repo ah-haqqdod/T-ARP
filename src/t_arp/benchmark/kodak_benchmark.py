@@ -1,13 +1,8 @@
-# Test compression error
-
 import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Tuple
 
 import chex
-
-# os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-# os.environ["JAX_PLATFORM_NAME"] = "cpu"
 import equinox as eqx
 import jax
 from jax import numpy as jnp
@@ -19,9 +14,6 @@ from t_arp.benchmark.metrics import (
     compute_ssim,
 )
 from t_arp.benchmark.utils.kodak import KodakDataLoader
-
-DATA_DIR = "datasets/kodak"
-RESULT_PATH = "src/test/tensor/kodak"
 
 
 @dataclass
@@ -41,12 +33,13 @@ class KodakBenchmark(eqx.Module):
     # blackbox functions
     decomposition_blackbox_fn: Callable = eqx.field(static=True)
     reconstruction_blackbox_fn: Callable = eqx.field(static=True)
+    data_dir: str = eqx.field(static=True)
     artifacts_blackbox_fn: Optional[Callable] = eqx.field(default=None, static=True)
 
     n_trials: int = eqx.field(default=1, static=True)
 
     def __call__(self, key: Optional[chex.PRNGKey] = None) -> Tuple[KodakResult, list]:
-        dataloader = KodakDataLoader(DATA_DIR)
+        dataloader = KodakDataLoader(self.data_dir)
         # pbar = tqdm(dataloader, desc=f"Benchmarking {self.method_name}")
         pbar = tqdm(dataloader, desc=f"Kodak dataset", leave=False)
         reconstructions = []

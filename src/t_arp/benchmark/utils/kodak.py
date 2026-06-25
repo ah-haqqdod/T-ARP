@@ -1,7 +1,5 @@
-import os
 from pathlib import Path
 
-import numpy as np
 from jax import numpy as jnp
 from PIL import Image
 

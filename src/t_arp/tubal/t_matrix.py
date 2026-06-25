@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from optparse import Option
 from typing import Any, Callable, Optional, Tuple, Union
 
 import chex

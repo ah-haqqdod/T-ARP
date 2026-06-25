@@ -83,9 +83,5 @@ class LeverageScoresSampling_module(CSS_module):
 
         key, subkey = jax.random.split(key)
         J = LeverageScoresSampling_module._leverage_score_row_sample(subkey, Vt.T, r)
-        # p = jnp.linalg.norm(Vt, axis=0) ** 2  # column norms, shape (n_cols,)
-        # p = p / jnp.sum(p)
-        # key, subkey = jax.random.split(key)
-        # indices = jnp.arange(y.shape[1])
-        # J = jax.random.choice(subkey, indices, shape=(r,), replace=False, p=p)
+
         return J

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from functools import partial, reduce
-from typing import Callable, Literal
+from functools import reduce
+from typing import Literal
 
 import chex
 import equinox as eqx

@@ -7,7 +7,7 @@ from t_arp.benchmark.metrics import (
 from t_arp.benchmark.utils import (
     KodakDataLoader,
     load_metrics,
-    plot_figures,
+    # plot_figures,
     png_to_tensor,
     read_yuv_tensor,
     save_metrics,
