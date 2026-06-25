@@ -1,0 +1,52 @@
+# -------------------------------------------------------------------
+# Synthetic Data Benchmark Configuration
+# -------------------------------------------------------------------
+
+# Paths and output settings
+save_path: "src/benchmarks/synth/results/"
+
+# Random seed and trial count
+seed: 42
+n_trials: 1 # number of trials (randomised methods only)
+
+# Tensor type and construction parameters
+# benchmark_type: "random_tensor" or "function_tensor"
+# benchmark_type: "random_tensor"
+benchmark_type: "function_tensor"
+t_shape: [60, 60, 60] # dimensions of the 3D tensor (list -> tuple in code)
+t_rank: 7 # rank for random tensor (ignored for function_tensor)
+eps: 1.0e-6 # noise level for random tensor; set to null for no noise
+function_tensor_p: 2 # exponent for function tensor (ignored for random_tensor)
+
+# Decomposition hyper‑parameters
+n_slices:
+  [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+n_oversamples: 5 # oversampling parameter for RSVD
+n_subspace_iters: 1 # number of subspace iterations for RSVD
+
+# -------------------------------------------------------------------
+# Methods to evaluate
+# -------------------------------------------------------------------
+# The "methods" dictionary maps a human‑readable name to the internal
+# identifier used by the benchmark logic.  Only the methods whose names
+# appear in "active_methods" will be executed.
+methods:
+  "ARP T-CUR": "arp_t_cur"
+  "T-SVD": "t_svd"
+  "T Uniform Sampling": "uniform"
+  "T Leverage Scores Sampling": "leverage_scores"
+  "T-ARP": "arp"
+  "T-ARP (Householder)": "arp_householder"
+
+# List of display names to actually run.  An empty list ( [ ] ) will
+# run nothing, while removing "active_methods" entirely will run all.
+active_methods:
+  [
+    "ARP T-CUR",
+    "T-SVD",
+    "T Uniform Sampling",
+    "T Leverage Scores Sampling",
+    "T-ARP",
+    "T-ARP (Householder)",
+  ]

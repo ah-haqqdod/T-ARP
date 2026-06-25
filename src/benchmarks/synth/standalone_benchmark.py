@@ -1,52 +1,38 @@
+import argparse
+import os
 from functools import partial
-from typing import Callable, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, Literal, Optional, Tuple, Union
 
 import chex
 import equinox as eqx
 import jax
 import numpy as np
 import tqdm
+import yaml
 from jax import numpy as jnp
 
 from t_arp.benchmark import compute_relative_error, save_metrics
-from t_arp.matrix import RSVD, ARP_params, CSS_module, CSS_module_factory
-from t_arp.tubal import TARP, TCSSBaselines, TMatrix, TMatrixTOnly, t_cross, t_cur
-
-BENCHMARK_TYPE: Literal["random_tensor", "function_tensor"] = "random_tensor"
-
-SAVE_PATH = "src/benchmarks/synth_tubal/results/"
-N_TRIALS = 1  # number of trials of randomized methods to collect statistics
-SAVE_RECONSTRUCTION = True
-
-
-METHODS_MAP = {
-    "ARP T-CUR": "arp_t_cur",
-    "T-SVD": "t_svd",
-    "T Uniform Sampling": "uniform",
-    "T Leverage Scores Sampling": "leverage_scores",
-    "T-ARP": "arp",
-    "T-ARP (Householder)": "arp_householder",
-}
-
-N_SLICES = tuple([i for i in range(2, 23)])
-SEED = 42
-N_OVERSAMPLES = 5
-N_SUBSPACE_ITERS = 1
-
-T_SHAPE = (60, 60, 60)
-
-FUNCTION_TENSOR_P = 2
-
-T_RANK = 7
-EPS = 1e-6
+from t_arp.matrix import ARP_params, CSS_module_factory
+from t_arp.tubal import (
+    TARP,
+    TCSSBaselines,
+    TMatrix,
+    TMatrixTOnly,
+    reconstruct_t_cross,
+    reconstruct_t_svd,
+    t_cross,
+    t_cur,
+    t_rsvd,
+    t_tsvd,
+)
 
 
 @jax.jit(static_argnums=(1, 2, 3))
 def construct_random_tmatrix(
     key: chex.PRNGKey,
-    t_rank: int = T_RANK,
-    t_shape: Tuple[int, ...] = T_SHAPE,
-    eps: Optional[float] = EPS,
+    t_rank: int,
+    t_shape: Tuple[int, ...],
+    eps: Optional[float],
 ) -> TMatrix:
     assert len(t_shape) > 2
 
@@ -67,10 +53,10 @@ def construct_random_tmatrix(
     return M
 
 
+@jax.jit(static_argnums=(0, 1))
 def construct_function_tmatrix(
-    dummy_key: Optional[chex.PRNGKey] = None,
-    t_shape: Tuple[int, ...] = T_SHAPE,
-    p: float = FUNCTION_TENSOR_P,
+    t_shape: Tuple[int, ...],
+    p: float,
 ) -> TMatrix:
     assert len(t_shape) > 2
 
@@ -87,61 +73,6 @@ def construct_function_tmatrix(
     M = TMatrix(1 / denom)
 
     return M
-
-
-@jax.jit(static_argnames=["n_slices"])
-def t_svd(
-    M: TMatrix, n_slices: int
-) -> Tuple[
-    Union[TMatrix, TMatrixTOnly],
-    Union[TMatrix, TMatrixTOnly],
-    Union[TMatrix, TMatrixTOnly],
-]:
-    U, S, Vt = M.facewise_operation(lambda A: jnp.linalg.svd(A, full_matrices=False))
-
-    # Truncate to n_slices
-    indices = jnp.arange(n_slices)
-    U = TMatrix(jnp.take(U.data, indices=indices, axis=1))
-    S = TMatrix(jnp.take(S.data, indices=indices, axis=0))
-    Vt = TMatrix(jnp.take(Vt.data, indices=indices, axis=0))
-
-    return U, S, Vt
-
-
-@jax.jit(static_argnames=["n_slices"])
-def t_rsvd(key: chex.PRNGKey, M: TMatrix, n_slices: int) -> TMatrix:
-    rsvd = RSVD(
-        rank=min(n_slices, M.shape[0], M.shape[1]),
-        n_oversamples=N_OVERSAMPLES,
-        n_subspace_iters=N_SUBSPACE_ITERS,
-    )
-
-    # rsvd_fn = lambda A: rsvd(key=key, A=A)
-    def rsvd_fn(key: chex.PRNGKey, A: chex.Array):
-        return rsvd(key=key, A=A)
-
-    # _, _, t_Vt = M.facewise_operation(rsvd_fn)
-    _, _, t_Vt = M.facewise_operation(rsvd_fn, key=key)
-
-    V = t_Vt.T.create_t_matrix()
-    return V
-
-
-@jax.jit
-def reconstruct_t_svd(U: TMatrix, S: TMatrix, Vt: TMatrix) -> jnp.ndarray:
-    # print("S shape before:", S.shape)
-    S = S.facewise_operation(lambda x: jnp.diag(x.flatten()))
-    # print("S shape after:", S.shape)
-    recon = (U @ S @ Vt).create_t_matrix()
-    # recon = jnp.clip(recon.data, 0.0, 1.0)
-    return recon.data
-
-
-@jax.jit
-def reconstruct_t_cross(C: TMatrix, W: TMatrix, R: TMatrix) -> jnp.ndarray:
-    recon = (C @ W @ R).create_t_matrix()
-    # recon = jnp.clip(recon.data, 0.0, 1.0)
-    return recon.data
 
 
 @jax.jit(static_argnames=["method", "n_slices"])
@@ -187,16 +118,23 @@ def benchmark_synth(
     key: chex.PRNGKey,
     decomposition_blackbox_fn: Callable,
     reconstruction_blackbox_fn: Callable,
+    n_samples: int,
+    benchmark_type: str,
     is_deterministic: bool = False,
-    n_samples: int = N_TRIALS,
 ) -> chex.Array:
-    keys_gen = jax.random.split(key, n_samples)
+    key_1, key_2 = jax.random.split(key)
+    keys_gen = jax.random.split(key_1, n_samples)
 
-    benchmark_fn = (
-        construct_function_tmatrix
-        if BENCHMARK_TYPE == "function_tensor"
-        else construct_random_tmatrix
-    )
+    @jax.jit
+    def benchmark_fn(key):
+        if benchmark_type == "function_tensor":
+            return construct_function_tmatrix(
+                config["t_shape"], config["function_tensor_p"]
+            )
+        else:
+            return construct_random_tmatrix(
+                key, config["t_rank"], config["t_shape"], config["eps"]
+            )
 
     if is_deterministic:
         return jax.vmap(
@@ -208,8 +146,7 @@ def benchmark_synth(
             )[-1]
         )(keys_gen)
     else:
-        subkey = jax.random.fold_in(key, 1234)
-        keys_decomp = jax.random.split(subkey, n_samples)
+        keys_decomp = jax.random.split(key_2, n_samples)
         return jax.vmap(
             lambda key_gen, key_decomp: (
                 M := benchmark_fn(key_gen),
@@ -222,17 +159,19 @@ def benchmark_synth(
 
 def t_svd_pass(
     key: chex.PRNGKey,
-    n_slices_list: Sequence[int] = N_SLICES,
+    config,
 ) -> np.ndarray:
     relative_errors = []
 
-    pbar = tqdm.tqdm(n_slices_list, desc="", leave=False)
+    pbar = tqdm.tqdm(config["n_slices"], desc="", leave=False)
     for n_slices in pbar:
         relative_error_batch = benchmark_synth(
             key=key,
-            decomposition_blackbox_fn=eqx.filter_jit(lambda M: t_svd(M, n_slices)),
+            decomposition_blackbox_fn=eqx.filter_jit(lambda M: t_tsvd(M, n_slices)),
             reconstruction_blackbox_fn=reconstruct_t_svd,
             is_deterministic=True,
+            n_samples=config["n_trials"],
+            benchmark_type=config["benchmark_type"],
         )
 
         relative_error = np.mean(relative_error_batch)
@@ -245,13 +184,15 @@ def t_svd_pass(
 
 
 def t_cur_pass(
-    key: chex.PRNGKey, n_slices_list: Sequence[int] = N_SLICES, method="arp"
+    key: chex.PRNGKey,
+    method,
+    config,
 ) -> np.ndarray:
     relative_errors = []
 
     arp_constr = CSS_module_factory(method=method)
 
-    pbar = tqdm.tqdm(n_slices_list, desc="", leave=False)
+    pbar = tqdm.tqdm(config["n_slices"], desc="", leave=False)
     for n_slices in pbar:
         relative_error_batch = benchmark_synth(
             key=key,
@@ -264,6 +205,8 @@ def t_cur_pass(
             ),
             reconstruction_blackbox_fn=reconstruct_t_cross,
             is_deterministic=True,
+            n_samples=config["n_trials"],
+            benchmark_type=config["benchmark_type"],
         )
 
         relative_error = np.mean(relative_error_batch)
@@ -278,20 +221,27 @@ def t_cur_pass(
 def t_css_pass(
     key,
     method,
-    n_slices_list: Sequence[int] = N_SLICES,
+    config,
     is_deterministic: bool = False,
 ) -> np.ndarray:
     relative_errors = []
     # execution_times = []
 
-    pbar = tqdm.tqdm(n_slices_list, desc="", leave=False)
+    pbar = tqdm.tqdm(config["n_slices"], desc="", leave=False)
     for n_slices in pbar:
         relative_error_batch = benchmark_synth(
             key,
             decomposition_blackbox_fn=eqx.filter_jit(
                 lambda key, M: (
                     keys := jax.random.split(key),
-                    V := t_rsvd(key=keys[0], M=M, n_slices=n_slices),
+                    Vt := t_rsvd(
+                        key=keys[0],
+                        M=M,
+                        n_slices=n_slices,
+                        n_oversamples=config["n_oversamples"],
+                        n_subspace_iters=config["n_subspace_iters"],
+                    )[-1],
+                    V := Vt.T.create_t_matrix(),
                     t_cross_helper(
                         key=keys[1], M=M, V=V, method=method, n_slices=n_slices
                     ),
@@ -299,6 +249,8 @@ def t_css_pass(
             ),
             reconstruction_blackbox_fn=reconstruct_t_cross,
             is_deterministic=is_deterministic,
+            n_samples=config["n_trials"],
+            benchmark_type=config["benchmark_type"],
         )
         relative_error = np.mean(relative_error_batch)
 
@@ -313,47 +265,71 @@ def t_css_pass(
     return relative_errors
 
 
-def main():
-    master_key = jax.random.PRNGKey(jnp.array(SEED))
+def load_config(path):
+    with open(path, "r") as f:
+        cfg = yaml.safe_load(f)
+    # Convert lists to tuples
+    cfg["t_shape"] = tuple(cfg["t_shape"])
+    cfg["n_slices"] = tuple(cfg["n_slices"])
+    # Build the map of methods to run
+    if "active_methods" in cfg:
+        cfg["methods_map"] = {
+            k: cfg["methods"][k] for k in cfg["active_methods"] if k in cfg["methods"]
+        }
+    else:
+        cfg["methods_map"] = cfg["methods"]
+    return cfg
+
+
+def get_benchmarking_task(key, method, config):
+    """
+    Dispatcher function to return the correct task execution.
+    """
+    if method == "t_svd":
+        return t_svd_pass(key=key, config=config)
+
+    if method == "arp_t_cur":
+        return t_cur_pass(key=key, method="arp", config=config)
+
+    t_arp_method_map = {
+        "arp_householder": "householder",
+        "arp_normalized": "orth_proj_normalized",
+        "arp": "orth_proj_pinv",
+    }
+
+    if method in t_arp_method_map:
+        method = t_arp_method_map[method]
+
+    return t_css_pass(key=key, method=method, config=config)
+
+
+def main(config):
+    seed_key = jax.random.PRNGKey(config["seed"])
 
     relative_errors_map = {}
 
-    pbar = tqdm.tqdm(METHODS_MAP.items(), desc="Benchmarking")
+    pbar = tqdm.tqdm(config["methods_map"].items(), desc="Benchmarking")
     for method_ex, method in pbar:
         pbar.set_postfix(method=method_ex)
-
-        if method == "t_svd":
-            relative_errors = t_svd_pass(
-                key=master_key,
-            )
-            relative_errors_map[method_ex] = relative_errors
-            continue
-
-        if method == "arp_t_cur":
-            relative_errors = t_cur_pass(key=master_key, method="arp")
-            relative_errors_map[method_ex] = relative_errors
-            continue
-
-        if method == "arp_householder":
-            method = "householder"
-        elif method == "arp_normalized":
-            method = "orth_proj_normalized"
-        elif method == "arp":
-            method = "orth_proj_pinv"
-
-        relative_errors = t_css_pass(
-            key=master_key,
-            method=method,
-        )
-        relative_errors_map[method_ex] = relative_errors
+        result = get_benchmarking_task(key=seed_key, method=method, config=config)
+        relative_errors_map[method_ex] = result
 
     save_metrics(
-        save_path=SAVE_PATH,
-        x_axis=np.asarray(N_SLICES),
+        save_path=os.path.join(config["save_path"], config["benchmark_type"]),
+        x_axis=np.asarray(config["n_slices"]),
         x_label="# Slices",
         relative_error_map=relative_errors_map,
     )
 
 
 if __name__ == "__main__":
-    main()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    default_config_path = os.path.join(script_dir, "config.yaml")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config", default=default_config_path, help="Path to YAML config file"
+    )
+    args = parser.parse_args()
+    config = load_config(args.config)
+    main(config)

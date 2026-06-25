@@ -1,0 +1,39 @@
+# -------------------------------------------------------------------
+# Kodak Dataset Benchmark Configuration
+# -------------------------------------------------------------------
+
+# Paths
+data_dir: "datasets/kodak"
+save_path: "src/benchmarks/kodak/results/"
+
+# Experiment settings
+n_trials: 1
+save_reconstruction: true
+seed: 42
+n_oversamples: 5
+n_subspace_iters: 1
+
+# Benchmark parameters
+n_slices: [10, 20, 40, 60, 80, 100] # YAML list
+
+# Methods to run (map of display name -> internal method identifier)
+methods:
+  "ARP T-CUR": "arp_t_cur"
+  "T-SVD": "t_svd"
+  "T Uniform Sampling": "uniform"
+  "T Lengths Squared Sampling": "length_squared"
+  "T Leverage Scores Sampling": "leverage_scores"
+  "T-ARP": "arp"
+  "T-ARP (Householder)": "arp_householder"
+
+# You can also define which methods are active, e.g.:
+active_methods:
+  [
+    "ARP T-CUR",
+    "T-SVD",
+    "T Uniform Sampling",
+    "T Lengths Squared Sampling",
+    "T Leverage Scores Sampling",
+    "T-ARP",
+    "T-ARP (Householder)",
+  ]

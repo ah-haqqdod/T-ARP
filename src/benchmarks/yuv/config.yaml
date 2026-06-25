@@ -1,0 +1,41 @@
+# -------------------------------------------------------------------
+# YUV Video Benchmark Configuration
+# -------------------------------------------------------------------
+
+# Paths
+video_dir: "datasets/yuv_video/Video/"
+video_name: "tempete_cif"
+save_path: "src/benchmarks/yuv/results/"
+
+# Video properties (Evaluated from "waterfall_cif")
+# CIF have width 352 and height 288; QCIF have width 176 and height 144
+# If not specified, the shape will be determined from the .yuv video file suffix
+# width: 352
+# height: 288
+framerate: 25
+
+# Experiment settings
+n_trials: 1
+save_reconstructions: true
+seed: 42
+n_oversamples: 5
+n_subspace_iters: 1
+use_rsvd: true
+use_intersection: false
+
+# Data types
+dtype: "float32" # the type of the data used in computations
+data_dtype: "uint8" # the type of the raw video data
+
+# Benchmark parameters
+n_slices: [50] # YAML list
+
+# Methods to run (map of display name -> internal method identifier)
+methods:
+  "Uniform": "uniform"
+  "Leverage Scores": "leverage_scores"
+  "T-ARP": "orth_proj_pinv"
+  "T-ARP (Householder)": "householder"
+
+# Active methods mapping
+active_methods: ["Uniform", "Leverage Scores", "T-ARP (Householder)"]
