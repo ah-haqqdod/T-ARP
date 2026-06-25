@@ -183,7 +183,7 @@ J = baseline_ls(subkey, A)
 
 ### `t_cross` — Common-Index Tubal Cross-Approximation
 
-`t_cross` selects both a lateral slice subset `J` and a horizontal slice subset `I` and returns the common-index CUR decomposition `A ≈ A_J @ W @ A_I`.
+`t_cross` selects both a lateral slice index subset `J` and a horizontal slice index subset `I` and returns the common-index CUR decomposition `A ≈ A_J @ W @ A_I`.
 
 By passing `use_intersection=True`, `t_cross` will select the intersection `A(I, J, :)^+` as the middle tensor `W`; otherwise `W = A(I, :, :)^+ @ A @ A(:, J, :)^+`.
 
