@@ -136,7 +136,7 @@ A = TMatrix(data)
 _, _, Vt = t_tsvd(A, n_slices=32)
 V = Vt.T.create_t_matrix()   # shape (256, 32, 3)
 
-# 2. Run T-ARP with Householder deflation (recommended)
+# 2. Run T-ARP with T Householder reflection (recommended)
 tarp = TARP(n_slices=32, method="householder")
 key, subkey = jax.random.split(key)
 J = tarp(subkey, V)   # integer array of shape (32,)
@@ -150,9 +150,9 @@ A_J = TMatrix(jnp.take(A.data, J, axis=1))   # (128, 32, 3)
 
 | `method` | Description |
 |---|---|
-| `"householder"` | Deflation via tubal Householder reflections (default) |
-| `"orth_proj_pinv"` | Deflation via orthogonal projection using the pseudo-inverse |
-| `"orth_proj_normalized"` | Deflation via normalised orthogonal projection |
+| `"householder"` | Decomposition via tubal Householder reflections (default) |
+| `"orth_proj_pinv"` | Decomposition via orthogonal projection using the pseudo-inverse |
+| `"orth_proj_normalized"` | Decomposition via normalised orthogonal projection |
 
 **Derandomized variant** — pass `use_derandomized=True` to replace random sampling with deterministic argmax selection:
 
