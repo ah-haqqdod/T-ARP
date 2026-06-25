@@ -1,4 +1,4 @@
-# modification of metrax ssim implementation. from modularized implementation to pure functions.
+# modification of metrax ssim implementation. from modularized implementation to pure functions. Source: https://github.com/google/metrax
 
 r"""SSIM (Structural Similarity Index Measure) Metric.
 
