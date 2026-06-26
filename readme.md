@@ -126,5 +126,4 @@ This project is licensed under the **MIT License** (see `LICENSE`).
 ## 📧 Support and Contact
 
 For questions, bug reports, or contributions, please contact:
-**firstname dot lastname [at] domain dot com**
-
+**ahmad dot akdod [at] gmail dot com**
