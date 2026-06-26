@@ -2,6 +2,8 @@
 
 All scripts are run from the **repository root**. Paths in `config.yaml` files are relative to that root. To use a custom config file, pass `--config <path>` to the `standalone_benchmark` script.
 
+View each corresponding `config.yaml` file for more accurate description of parameters that need to be defined.
+
 ---
 
 ## Kodak dataset
