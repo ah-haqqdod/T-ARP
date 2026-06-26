@@ -1,5 +1,13 @@
 # Adaptive Randomized Pivoting for Tensor Singular Value Decomposition Model
 
+## Overview
+
+T-ARP provides efficient algorithms for common-index tensor cross-approximation of "any"-order tensors (3rd and above). It is a generalization of the ARP algorithm ("Adaptive randomized pivoting for column subset selection, DEIM, and low-rank approximation" by Alice Cortinovis and Daniel Kressner) for the T-SVD model. An illustration of common-index tensor cross-approximation is shown below.
+
+![](assets/t_cross.png)
+
+This repository contains the source code for T-ARP, and the experiments to reproduce the results in the paper, "Adaptive Randomized Pivoting for Tensor Singular Value Decomposition Model" by Ahmadsho Akdodshoev, Valentin Leplat and Salman Ahmadi-Asl. https://arxiv.org/abs/2606.26688.
+
 ## installation
 
 Step 1: Download python
