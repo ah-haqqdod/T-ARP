@@ -12,6 +12,7 @@ def main():
         description="Plot metrics from a specified directory."
     )
     parser.add_argument(
+        "--save-dir",
         "--save_dir",
         type=str,
         required=True,
