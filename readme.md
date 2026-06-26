@@ -95,6 +95,36 @@ The usage of the `TMatrix` structure, the `T-ARP` algorithms, and other methods 
 
 ---
 
-## References
+## 📄 Citation
 
-## License
+If you use ARP-T-CUR or T-ARP algorithms in your research, please cite our paper:
+
+```bibtex
+@misc{akdodshoev2026adaptiverandomizedpivotingtensor,
+      title={Adaptive Randomized Pivoting for Tensor Singular Value Decomposition Model}, 
+      author={Ahmadsho Akdodshoev and Valentin Leplat and Salman Ahmadi-Asl},
+      year={2026},
+      eprint={2606.26688},
+      archivePrefix={arXiv},
+      primaryClass={math.NA},
+      url={https://arxiv.org/abs/2606.26688}, 
+}
+```
+
+## 📄 License
+
+This project is licensed under the **MIT License** (see `LICENSE`).
+
+**Key points (MIT):**
+
+- ✅ **Use**: you can use this software for any purpose
+- ✅ **Modify & distribute**: you can modify, distribute, and sublicense it
+- ✅ **Commercial use**: permitted
+- ✅ **Attribution**: include the copyright and license notice in copies
+- ✅ **No warranty**: the software is provided "as is"
+
+## 📧 Support and Contact
+
+For questions, bug reports, or contributions, please contact:
+**firstname dot lastname [at] domain dot com**
+
