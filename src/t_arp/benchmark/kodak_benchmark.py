@@ -38,8 +38,8 @@ class KodakBenchmark(eqx.Module):
 
     n_trials: int = eqx.field(default=1, static=True)
 
-    def __call__(self, key: Optional[chex.PRNGKey] = None) -> Tuple[KodakResult, list]:
-        dataloader = KodakDataLoader(self.data_dir)
+    def __call__(self, key: Optional[chex.PRNGKey] = None, dtype: jnp.dtype = jnp.float32) -> Tuple[KodakResult, list]:
+        dataloader = KodakDataLoader(self.data_dir, dtype=dtype)
         # pbar = tqdm(dataloader, desc=f"Benchmarking {self.method_name}")
         pbar = tqdm(dataloader, desc=f"Kodak dataset", leave=False)
         reconstructions = []

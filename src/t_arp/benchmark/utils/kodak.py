@@ -4,7 +4,7 @@ from jax import numpy as jnp
 from PIL import Image
 
 
-def png_to_tensor(image_path: str) -> jnp.ndarray:
+def png_to_tensor(image_path: str, dtype=jnp.float32) -> jnp.ndarray:
     """
     Load a PNG image and convert it to a JAX tensor.
 
@@ -22,7 +22,7 @@ def png_to_tensor(image_path: str) -> jnp.ndarray:
         img = img.convert("RGB")
 
     # Convert to numpy array and then to JAX array
-    img_array = jnp.array(img, dtype=jnp.float32)
+    img_array = jnp.array(img, dtype=dtype)
 
     # Normalize to [0, 1]
     img_array = img_array / 255.0
@@ -39,6 +39,7 @@ class KodakDataLoader:
         self,
         data_dir: str = "datasets/kodak",
         image_extensions: tuple = (".png", ".jpg", ".jpeg"),
+        dtype: jnp.dtype = jnp.float32,
     ):
         """
         Initialize the dataloader.
@@ -46,9 +47,11 @@ class KodakDataLoader:
         Args:
             data_dir: Directory containing images
             image_extensions: Tuple of valid image extensions
+            dtype: Data type for the image tensor
         """
         self.data_dir = Path(data_dir)
         self.image_extensions = image_extensions
+        self.dtype = dtype
         self.image_paths = []
 
         # Collect all image paths
@@ -77,4 +80,4 @@ class KodakDataLoader:
         img_path = self.image_paths[self.current_idx]
         self.current_idx += 1
 
-        return png_to_tensor(str(img_path))
+        return png_to_tensor(str(img_path), dtype=self.dtype)

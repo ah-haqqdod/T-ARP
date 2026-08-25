@@ -16,6 +16,7 @@ Where:
   :math:`I` and :math:`J`.
 """
 
+import jax
 import chex
 from jax import numpy as jnp
 
@@ -48,8 +49,12 @@ def _calculate_psnr(
     #         f"Inputs must be 4‑D (batch, height, width, channels), got {img1.ndim}‑D."
     #     )
 
-    img1 = img1.astype(jnp.float32)
-    img2 = img2.astype(jnp.float32)
+    if jax.config.read("jax_enable_x64"):
+        img1 = img1.astype(jnp.float64)
+        img2 = img2.astype(jnp.float64)
+    else:
+        img1 = img1.astype(jnp.float32)
+        img2 = img2.astype(jnp.float32)
 
     # Mean‑squared error per image.
     mse = jnp.mean(jnp.square(img1 - img2), axis=(1, 2, 3))

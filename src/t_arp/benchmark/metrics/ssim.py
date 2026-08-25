@@ -266,8 +266,12 @@ def _calculate_ssim(
         )
 
     num_channels = img1.shape[-1]
-    img1 = img1.astype(jnp.float32)
-    img2 = img2.astype(jnp.float32)
+    if jax.config.read("jax_enable_x64"):
+        img1 = img1.astype(jnp.float64)
+        img2 = img2.astype(jnp.float64)
+    else:
+        img1 = img1.astype(jnp.float32)
+        img2 = img2.astype(jnp.float32)
 
     gaussian_kernal_1d = _gaussian_kernel1d(filter_sigma, (filter_size - 1) // 2)
     gaussian_kernel_2d = jnp.outer(gaussian_kernal_1d, gaussian_kernal_1d)

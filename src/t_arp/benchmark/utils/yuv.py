@@ -82,7 +82,7 @@ def write_tensor_to_yuv(tensor, yuv_path, width, height, pix_fmt="yuv420p"):
 
     # Write all frames to file
     yuvio.mimwrite(yuv_path, frames_list)
-    print(f"Saved {num_frames} frames to {yuv_path}")
+    # print(f"Saved {num_frames} frames to {yuv_path}")
 
 
 def yuv_to_mp4_ffmpeg(yuv_path, mp4_path, width, height, framerate, pix_fmt="yuv420p"):
@@ -125,7 +125,7 @@ def yuv_to_mp4_ffmpeg(yuv_path, mp4_path, width, height, framerate, pix_fmt="yuv
     try:
         # Execute the command
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(f"Successfully converted '{yuv_path}' to '{mp4_path}'")
+        # print(f"Successfully converted '{yuv_path}' to '{mp4_path}'")
     except FileNotFoundError:
         print(
             "Error: 'ffmpeg' command not found. Please ensure FFmpeg is installed and in your system PATH."
