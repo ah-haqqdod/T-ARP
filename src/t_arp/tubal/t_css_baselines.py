@@ -39,18 +39,18 @@ class TCSSBaselines(eqx.Module):
         """
         # ARP method returns only J
         if self.method == "uniform":
-            J = self.__uniform(key=key, V=V, n_slices=self.n_slices)
+            J = self._uniform(key=key, V=V, n_slices=self.n_slices)
         elif self.method == "length_squared":
-            J = self.__length_squared(key=key, M=V, n_slices=self.n_slices)
+            J = self._length_squared(key=key, M=V, n_slices=self.n_slices)
         elif self.method == "leverage_scores":
-            J = self.__leverage_scores(key=key, V=V, n_slices=self.n_slices)
+            J = self._leverage_scores(key=key, V=V, n_slices=self.n_slices)
         else:
             return NotImplemented
 
         return J
 
     @staticmethod
-    def __uniform(key, V: TMatrix, n_slices: int):
+    def _uniform(key, V: TMatrix, n_slices: int):
         p = jnp.ones(V.shape[0]) / V.shape[0]
         idcs = jnp.arange(0, V.shape[0])
 
@@ -62,7 +62,7 @@ class TCSSBaselines(eqx.Module):
         return J
 
     @staticmethod
-    def __length_squared(key, M: TMatrix, n_slices: int):
+    def _length_squared(key, M: TMatrix, n_slices: int):
         shape = M.shape
         M_ = jnp.reshape(M.data, (shape[0], shape[1], -1))
 
@@ -76,16 +76,21 @@ class TCSSBaselines(eqx.Module):
         return J
 
     @staticmethod
-    def __leverage_scores(key, V: TMatrix, n_slices: int):
+    def _leverage_scores(key, V: TMatrix, n_slices: int):
         # NOTE: this is the same norm function used in ARP methods
-        norm_sq_fn = jax.vmap(lambda M: jnp.linalg.norm(M) ** 2, in_axes=(0))
+        # norm_sq_fn = jax.vmap(lambda M: jnp.linalg.norm(M) ** 2, in_axes=(0))
+        norm_sq_fn = jax.vmap(
+            lambda M: jnp.real(jnp.vdot(M.ravel(), M.ravel())),
+            in_axes=(0)
+        )
+
 
         p = norm_sq_fn(V.data)
         denom = jnp.sum(p)
         p = p / denom
-        idcs = jnp.arange(0, V.shape[0])
+        # idcs = jnp.arange(0, V.shape[0])
 
         key, subkey = jax.random.split(key)
-        J = jax.random.choice(subkey, idcs, shape=(n_slices,), replace=False, p=p)
+        J = jax.random.choice(subkey, V.shape[0], shape=(n_slices,), replace=False, p=p)
 
         return J

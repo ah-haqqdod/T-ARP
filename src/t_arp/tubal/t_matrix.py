@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import math
 from typing import Any, Callable, Optional, Tuple, Union
 
 import chex
@@ -30,6 +31,9 @@ class TMatrixAbstract(eqx.Module, ABC):
     @property
     def T(self) -> "TMatrixTOnly":
         return self.facewise_operation(jnp.transpose).facewise_operation(jnp.conjugate)
+
+    @abstractmethod
+    def conjugate_symmetrize(self) -> "TMatrixTOnly": ...
 
     def facewise_operation(
         self,
@@ -192,7 +196,7 @@ class TMatrixAbstract(eqx.Module, ABC):
 
     @staticmethod
     def __sub_t_only(A, B):
-        assert A.shape == B.shape
+        assert A.shape == B.shape, f"Shape mismatch: {A.shape} != {B.shape}"
         return TMatrixTOnly(
             t_data=A.t_data - B.t_data,
             data_domain_shape=A.shape,
@@ -266,9 +270,11 @@ class TMatrixTOnly(TMatrixAbstract):
 
     def create_t_matrix(self, dtype: Optional[jnp.dtype] = None):
         M = self.t_data.reshape(self.shape)
-        ndim = M.ndim
-        for i in reversed(range(2, ndim)):
-            M = jnp.fft.ifft(M, axis=i)
+        # ndim = M.ndim
+        # for i in reversed(range(2, ndim)):
+        #     M = jnp.fft.ifft(M, axis=i)
+        axes = tuple(range(2, M.ndim))
+        M = jnp.fft.ifftn(M, axes=axes)
 
         if dtype is None:
             dtype = self._data_dtype
@@ -294,6 +300,17 @@ class TMatrixTOnly(TMatrixAbstract):
         if shape is None or dtype is None:
             raise ValueError("shape and dtype must be specified if example is None")
         return TMatrixTOnly(t_data, data_domain_shape=shape, data_dtype=dtype)
+
+    def conjugate_symmetrize(self) -> "TMatrixTOnly":
+        # Complex inputs do not have conjugate symmetry - return self as-is
+        if self._data_dtype == jnp.complex64 or self._data_dtype == jnp.complex128:
+            return self
+
+        return TMatrixTOnly(
+            conjugate_symmetrize(self._t_data, self._data_domain_shape, self._data_dtype),
+            data_domain_shape=self._data_domain_shape,
+            data_dtype=self._data_dtype,
+        )
 
     def __repr__(self):
         return f"TDomainMatrix(data_domain_shape={self.shape}, dtype={self.dtype})"
@@ -321,6 +338,7 @@ class TMatrix(TMatrixAbstract):
         self._ndim = M.ndim
         self._dtype = M.dtype if dtype is None else dtype
 
+        # TODO: what if M is not a T-Matrix and a "T-Vector" ?
         self._t_domain = (
             TMatrixTOnly(
                 t_data=self._transform_domain(M).reshape(_shape[0], _shape[1], -1),
@@ -353,15 +371,20 @@ class TMatrix(TMatrixAbstract):
     # NOTE: cannot use lax iters since axis is static in all calls!
     @staticmethod
     def _transform_domain(M: chex.Array):
-        ndim = M.ndim
-        for i in range(2, ndim):
-            M = jnp.fft.fft(M, axis=i)
+        axes = tuple(range(2, M.ndim))
+        return jnp.fft.fftn(M, axes=axes)
+        # ndim = M.ndim
+        # for i in range(2, ndim):
+        #     M = jnp.fft.fft(M, axis=i)
 
-        return M
+        # return M
 
     @staticmethod
     def eye(shape, dtype):
         return t_eye(shape[0], shape[1], *shape[2:], dtype=dtype, return_t_matrix=True)
+
+    def conjugate_symmetrize(self) -> "TMatrixTOnly":
+        return self._t_domain.conjugate_symmetrize()
 
 
 # def t_rmul(A: Union[TMatrixTOnly, TMatrix], B: Union[TMatrixTOnly, TMatrix]):
@@ -391,7 +414,7 @@ def t_product(
     A: TMatrixAbstract,
     B: TMatrixAbstract,
 ) -> TMatrixTOnly:
-    assert A.t_data.ndim == B.t_data.ndim
+    assert A.t_data.ndim == B.t_data.ndim, f"A.t_data.ndim={A.t_data.ndim}, B.t_data.ndim={B.t_data.ndim}"
     assert len(A.t_data.shape) > 2
     assert len(B.t_data.shape) > 2
     assert (B.t_data.shape[0] == A.t_data.shape[1]) & (
@@ -451,3 +474,70 @@ def t_eye(
     if return_t_matrix:
         return TMatrix(tensor)  # TMatrix assumed imported/defined elsewhere
     return tensor
+
+
+def conjugate_symmetrize(t_data, data_domain_shape, data_dtype=None) -> chex.Array:
+    # Complex inputs do not have conjugate symmetry - return self as-is
+    if data_dtype and (data_dtype == jnp.complex64 or data_dtype == jnp.complex128):
+        return t_data
+
+    shape = data_domain_shape
+    t_data_shape = t_data.shape
+
+    # determine if this is a T-Matrix or a T-Vector
+    if t_data.shape[-1] == math.prod(shape[2:]):
+        is_t_matrix = True
+        tube_shape = shape[2:]
+        front_axes = (0, 1)
+    else:
+        is_t_matrix = False
+        tube_shape = shape[1:]
+        front_axes = (0,)
+
+    t_data = t_data.reshape(shape)
+
+    # 1. Create the N-Dimensional half-space mask using random anti-symmetry
+    axes = tuple(range(2, 2 + len(tube_shape))) if is_t_matrix else tuple(range(1, 1 + len(tube_shape)))
+
+    def conjugate_reflect(A, axes=axes):
+        """Returns A(-k % N)* for N-dimensional frequencies."""
+        if not axes:
+            return jnp.conj(A)
+        # Flip reverses indices, shift by 1 maps k perfectly to -k modulo N
+        A_ref = jnp.conj(jnp.flip(A, axis=axes))
+        return jnp.roll(A_ref, shift=tuple([1]*len(axes)), axis=axes)
+
+    # Generate an antisymmetric tensor to flawlessly split conjugate pairs in half
+    if tube_shape:
+        dummy_key = jax.random.PRNGKey(0)
+        axes_R = tuple(range(len(tube_shape)))
+        R = jax.random.normal(dummy_key, tube_shape)
+        R_ref = jnp.roll(jnp.flip(R, axis=axes_R), shift=tuple([1]*len(axes_R)), axis=axes_R)
+        mask = (R - R_ref) >= 0
+    else:
+        mask = jnp.array(True)
+
+    # Broadcast the mask across the matrix dimensions (axes 0 & 1)
+    mask_ = jnp.expand_dims(mask, axis=(0, 1)) if is_t_matrix else jnp.expand_dims(mask, axis=0)
+
+    # 2. Enforce strict mathematical symmetry by overwriting the dependent half
+    t_data = jnp.where(mask_, t_data, conjugate_reflect(t_data))
+
+    # 3. Enforce reality at self-conjugate frequencies (DC and Nyquist)
+    # Build a mask that is True ONLY where every tube index is fixed (0 or N/2)
+    fixed_mask = jnp.ones(tube_shape, dtype=bool)
+    for i, n in enumerate(tube_shape):
+        coord = jnp.arange(n).reshape(*([1] * i + [-1] + [1] * (len(tube_shape) - i - 1)))
+        if n % 2 == 0:
+            axis_fixed = (coord == 0) | (coord == n // 2)
+        else:
+            axis_fixed = (coord == 0)
+        fixed_mask = fixed_mask & axis_fixed
+
+    fixed_mask_broadcast = jnp.expand_dims(fixed_mask, axis=front_axes)
+
+    # Force imaginary part to zero at these fixed points
+    t_data = jnp.where(fixed_mask_broadcast, jnp.real(t_data), t_data)
+
+    t_data = t_data.reshape(t_data_shape)
+    return t_data
