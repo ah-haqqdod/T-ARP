@@ -6,19 +6,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "t_arp"
 version = "0.1.0"
+requires-python = ">=3.11"
 dependencies = [
+    "jax>=0.10.0",
+    "jaxlib>=0.10.0",
     "equinox",
+    "chex",
     "tqdm",
     "numpy",
-    "jax",
-    "chex",
-    "jaxlib",
+    "pandas",
     "Pillow",
     "yuvio",
     "fastparquet",
     "pyarrow",
-    "pandas",
     "matplotlib",
     "matplot2tikz",
-    "Jinja2"
+    "Jinja2",
+    "PyYAML"
 ]
