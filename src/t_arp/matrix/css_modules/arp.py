@@ -19,6 +19,7 @@ class ARP_params(CSS_params):
     n_subspace_iters: Optional[int] = eqx.field(default=None, static=True)
 
     use_householder: bool = eqx.field(default=True, static=True)
+    use_derandomized: bool = eqx.field(default=False, static=True)
 
 
 @dataclass

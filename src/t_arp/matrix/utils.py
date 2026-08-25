@@ -47,7 +47,7 @@ class RSVD(eqx.Module):
 
             def loop_body(i, carry):
                 Q = carry
-                Z, _ = jnp.linalg.qr(A.T @ Q)
+                Z, _ = jnp.linalg.qr(A.conj().T @ Q)
                 Q_next, _ = jnp.linalg.qr(A @ Z)
                 return Q_next
 
@@ -76,11 +76,13 @@ class RSVD(eqx.Module):
         # Stage A.
         m, n = A.shape
         _, subkey = jax.random.split(key)
-        O = jax.random.normal(subkey, (n, n_samples))
+        # dtype of O. guarantee float32 for integer types, float for float, and complex for complex.
+        dtype = jnp.result_type(A.dtype, jnp.float32)
+        O = jax.random.normal(subkey, (n, n_samples), dtype=dtype)
         Q = find_range(O, A, self.n_subspace_iters)
 
         # Stage B.
-        B = Q.T @ A
+        B = Q.conj().T @ A
         U_tilde, S, Vt = jnp.linalg.svd(B, full_matrices=False)
         U = Q @ U_tilde
 
@@ -106,7 +108,8 @@ class HouseholderReflection(eqx.Module):
         col_v = col_v.flatten()
 
         v_norm, u1 = HouseholderReflection.__find_norm_and_u1(col_v, idx)
-        has_zero_denom = jnp.isclose(v_norm, 0)
+        # has_zero_denom = jnp.isclose(v_norm, 0)
+        has_zero_denom = v_norm <= jnp.finfo(v_norm.dtype).eps
 
         Q, R = jax.lax.cond(
             has_zero_denom,
@@ -117,6 +120,7 @@ class HouseholderReflection(eqx.Module):
             col_v,
             idx,
             u1,
+            v_norm,
         )
         return Q, R
 
@@ -129,7 +133,8 @@ class HouseholderReflection(eqx.Module):
         row_v = jnp.conjugate(row_v)
 
         v_norm, u1 = HouseholderReflection.__find_norm_and_u1(row_v, idx)
-        has_zero_denom = jnp.isclose(v_norm, 0)
+        # has_zero_denom = jnp.isclose(v_norm, 0)
+        has_zero_denom = v_norm <= jnp.finfo(v_norm.dtype).eps
 
         L, Q = jax.lax.cond(
             has_zero_denom,
@@ -140,6 +145,7 @@ class HouseholderReflection(eqx.Module):
             row_v,
             idx,
             u1,
+            v_norm,
         )
         return L, Q
 
@@ -151,7 +157,9 @@ class HouseholderReflection(eqx.Module):
         col_v = col_v.flatten()
 
         v_norm, u1 = HouseholderReflection.__find_norm_and_u1(col_v, idx)
-        has_zero_denom = jnp.isclose(v_norm, 0)
+        # has_zero_denom = jnp.isclose(v_norm, 0)
+        has_zero_denom = v_norm <= jnp.finfo(v_norm.dtype).eps
+
 
         M_ = jax.lax.cond(
             has_zero_denom,
@@ -161,6 +169,7 @@ class HouseholderReflection(eqx.Module):
             col_v,
             idx,
             u1,
+            v_norm,
         )
         return M_
 
@@ -171,7 +180,8 @@ class HouseholderReflection(eqx.Module):
         row_v = jnp.conjugate(row_v)
 
         v_norm, u1 = HouseholderReflection.__find_norm_and_u1(row_v, idx)
-        has_zero_denom = jnp.isclose(v_norm, 0)
+        # has_zero_denom = jnp.isclose(v_norm, 0)
+        has_zero_denom = v_norm <= jnp.finfo(v_norm.dtype).eps
 
         M_ = jax.lax.cond(
             has_zero_denom,
@@ -181,6 +191,7 @@ class HouseholderReflection(eqx.Module):
             row_v,
             idx,
             u1,
+            v_norm,
         )
         return M_
 
@@ -207,17 +218,17 @@ class HouseholderReflection(eqx.Module):
         return v_norm, u1
 
     @staticmethod
-    def __QR_step(Q, R, v, idx, u1):
+    def __QR_step(Q, R, v, idx, u1, v_norm):
         """return Q = Q(I - H) and R = (I - H)R, such that A = Q R"""
 
         u = jax.lax.dynamic_update_index_in_dim(v, u1, index=idx, axis=0)
-        u = u
 
         Q_u = Q @ u
         uH_R = jnp.conjugate(u) @ R
         uH_u = jnp.vdot(u, u)
 
-        tau = 2 / uH_u.real
+        # tau = 2 / uH_u.real
+        tau = 1.0 / (v_norm * jnp.abs(u1))
 
         # Q = Q(I - tau * uu^T/(u^Tu))
         Q = Q - tau * jnp.outer(Q_u, jnp.conjugate(u))
@@ -226,17 +237,17 @@ class HouseholderReflection(eqx.Module):
         return Q, R
 
     @staticmethod
-    def __columnwise_step(R, v, idx, u1):
+    def __columnwise_step(R, v, idx, u1, v_norm):
         """return Q = Q(I - H) and R = (I - H)R, such that A = Q R"""
 
         u = jax.lax.dynamic_update_index_in_dim(v, u1, index=idx, axis=0)
-        u = u
 
         # Q_u = Q @ u
         uH_R = jnp.conjugate(u) @ R
-        uH_u = jnp.vdot(u, u)
+        # uH_u = jnp.vdot(u, u)
 
-        tau = 2 / uH_u.real
+        # tau = 2 / uH_u.real
+        tau = 1.0 / (v_norm * jnp.abs(u1))
 
         # Q = Q(I - tau * uu^T/(u^Tu))
         # Q = Q - tau * jnp.outer(Q_u, jnp.conjugate(u))
@@ -245,7 +256,7 @@ class HouseholderReflection(eqx.Module):
         return R
 
     @staticmethod
-    def __LQ_step(L, Q, v, idx, u1):
+    def __LQ_step(L, Q, v, idx, u1, v_norm):
         """return Q = (I - H)Q and R = R(I - H), such that A = R Q"""
 
         # v = jnp.conjugate(v)  # added this
@@ -254,10 +265,11 @@ class HouseholderReflection(eqx.Module):
         L_u = L @ u
         uH_Q = jnp.conjugate(u) @ Q
         # uH_u = jnp.conjugate(u) @ u
-        uH_u = jnp.vdot(u, u)
+        # uH_u = jnp.vdot(u, u)
         # H = jnp.eye(M.shape[0], dtype=jnp.complex64) - 2 * u_uH / uH_u
 
-        tau = 2 / uH_u.real
+        # tau = 2 / uH_u.real
+        tau = 1.0 / (v_norm * jnp.abs(u1))
 
         # L = L(I - tau * uu^T/(u^Tu))
         L = L - tau * jnp.outer(L_u, jnp.conjugate(u))
@@ -266,19 +278,19 @@ class HouseholderReflection(eqx.Module):
         return L, Q
 
     @staticmethod
-    def __rowwise_step(R, v, idx, u1):
+    def __rowwise_step(R, v, idx, u1, v_norm):
         """return Q = (I - H)Q and R = R(I - H), such that A = R Q"""
 
         u = jax.lax.dynamic_update_index_in_dim(v, u1, index=idx, axis=0)
-        u = u
 
         R_u = R @ u
         # uH_Q = jnp.conjugate(u) @ Q
         # uH_u = jnp.conjugate(u) @ u
-        uH_u = jnp.vdot(u, u)
+        # uH_u = jnp.vdot(u, u)
         # H = jnp.eye(M.shape[0], dtype=jnp.complex64) - 2 * u_uH / uH_u
 
-        tau = 2 / uH_u.real
+        # tau = 2 / uH_u.real
+        tau = 1.0 / (v_norm * jnp.abs(u1))
 
         # R = R(I - tau * uu^T/(u^Tu))
         R = R - tau * jnp.outer(R_u, jnp.conjugate(u))

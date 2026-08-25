@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from functools import partial
 
 import chex
 import equinox as eqx
@@ -20,10 +19,12 @@ class ARP(eqx.Module):
 
     rank: int = eqx.field(static=True)
     use_householder: bool = eqx.field(default=True, static=True)
+    use_derandomized: bool = eqx.field(default=False, static=True)
 
-    def __init__(self, rank, use_householder=True):
+    def __init__(self, rank, use_householder=True, use_derandomized=False):
         self.rank = rank
         self.use_householder = use_householder
+        self.use_derandomized = use_derandomized
 
     def __call__(self, key, V: chex.Array):
         chex.assert_rank(V, 2)
@@ -31,14 +32,12 @@ class ARP(eqx.Module):
         # cannot sample more columns than the number of rows or columns of V
         rank = min(self.rank, *V.shape)
         if self.use_householder:
-            return self._arp_householder(key=key, V=V, rank=rank)
+            return self._arp_householder(key=key, V=V, rank=rank, use_derandomized=self.use_derandomized)
 
-        return self._arp_orth_proj(key=key, V=V, rank=rank)
+        return self._arp_orth_proj(key=key, V=V, rank=rank, use_derandomized=self.use_derandomized)
 
     @staticmethod
-    def _arp_orth_proj(key, V: chex.Array, rank):
-        indices = jnp.arange(0, V.shape[0])
-        max_rank = min(*V.shape)
+    def _arp_orth_proj(key, V: chex.Array, rank, use_derandomized: bool = False):
 
         def loop_body(carry, x):
             key, V, i = carry
@@ -47,17 +46,16 @@ class ARP(eqx.Module):
             j_k, v = ARP._sample_row(
                 key=subkey,
                 V=V,
-                indices=indices,
-                max_rank=max_rank,
-                i=i,
+                use_derandomized=use_derandomized,
             )
 
             # print("The shape of v", v.shape)
             # orthogonal projection onto the orthogonal complement of v
-            v = v / (jnp.linalg.norm(v) + 1e-8)
+            # v = v / (jnp.linalg.norm(v) + 1e-8)
+            v = v / jnp.maximum(jnp.linalg.norm(v), jnp.finfo(v.dtype).eps)
             # V = V - (V @ v) @ v.T
             # v is a row vector (1, n), hence we need to do the following
-            V = V - (V @ v.T) @ v
+            V = V - (V @ v.conj().T) @ v
 
             return (key, V, i + 1), j_k
 
@@ -68,10 +66,8 @@ class ARP(eqx.Module):
         return J
 
     @staticmethod
-    def _arp_householder(key, V: chex.Array, rank):
+    def _arp_householder(key, V: chex.Array, rank, use_derandomized: bool = False):
         zero_column = jnp.zeros((V.shape[0], 1), dtype=V.dtype)
-        indices = jnp.arange(0, V.shape[0])
-        max_rank = min(*V.shape)
 
         def loop_body(carry, xs):
             key, V, i = carry
@@ -80,9 +76,7 @@ class ARP(eqx.Module):
             j_k, v = ARP._sample_row(
                 key=subkey,
                 V=V,
-                indices=indices,
-                max_rank=max_rank,
-                i=i,
+                use_derandomized=use_derandomized,
             )
 
             # reflect the j_k-th row vector
@@ -99,18 +93,19 @@ class ARP(eqx.Module):
         return J
 
     @staticmethod
-    def _sample_row(key, V, indices, max_rank=0, i=0):
-        rowwise_norm_fn = partial(jnp.linalg.norm, axis=1)
+    def _sample_row(key, V, use_derandomized: bool = False):
+        norm_sq_fn = jax.vmap(lambda row: jnp.real(jnp.vdot(row, row)))
         # Compute leverage scores
-        p = rowwise_norm_fn(V) ** 2
+        p = norm_sq_fn(V)
+        p = jnp.where(p > jnp.finfo(p.dtype).eps, p, 0)
         denom_true = jnp.sum(p)
-        # denom_theor = max_rank - i
-        # jax.debug.print("Denom {x} {y}", x=denom_true, y=denom_theor)
-        # p = p / denom_theor
         p = p / denom_true
 
         # sample index
-        j_k = jax.random.choice(key, indices, p=p)
+        if use_derandomized:
+            j_k = jnp.argmax(p)
+        else:
+            j_k = jax.random.choice(key, V.shape[0], p=p)
 
         # index the row
         v = jax.lax.dynamic_index_in_dim(V, j_k)
