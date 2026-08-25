@@ -26,7 +26,9 @@ from t_arp.tubal import (
     t_rsvd,
     t_tsvd,
 )
-
+# enable float64 and complex128 in jax
+jax.config.update("jax_enable_x64", True)
+EXPERIMENTS_DTYPE = jnp.float64
 # NOTE: benchmark loop
 # 1. iterate over methods
 # 2. iterate over n_slices_list
@@ -78,7 +80,7 @@ def t_cross_helper(
     # elif method == "fast_arp":
     #     tcss_module_constructor = partial(FastTARP, method="householder")
     else:
-        tcss_module_constructor = partial(TARP, method=method, use_derandomized=True)
+        tcss_module_constructor = partial(TARP, method=method, use_derandomized=False)
 
     key, subkey = jax.random.split(key)
 
@@ -113,11 +115,11 @@ def t_svd_pass(
             ),
             reconstruction_blackbox_fn=lambda U, S, Vt: jnp.clip(
                 reconstruct_t_svd(U, S, Vt), 0.0, 1.0
-            ).astype(jnp.float32),
+            ).astype(EXPERIMENTS_DTYPE),
             data_dir=config["data_dir"],
         )
 
-        result, reconstructions = benchmark()
+        result, reconstructions = benchmark(dtype=EXPERIMENTS_DTYPE)
         # log reconstructions
         if config["save_reconstruction"]:
             save_reconstructions(
@@ -159,7 +161,7 @@ def t_cur_pass(
             n_trials=config["n_trials"],
             decomposition_blackbox_fn=eqx.filter_jit(
                 lambda key, image: (
-                    M := TMatrix(image.astype(jnp.float32)),
+                    M := TMatrix(image.astype(EXPERIMENTS_DTYPE)),
                     arp_params := ARP_params(rsvd_r=n_slices),
                     arp := arp_constr(r=n_slices, css_params=arp_params),
                     CWR_tuple := t_cur(M, css_method=arp, key=key),
@@ -168,11 +170,11 @@ def t_cur_pass(
             # reconstruction_blackbox_fn=reconstruct_t_cross,
             reconstruction_blackbox_fn=lambda C, W, R: jnp.clip(
                 reconstruct_t_cross(C, W, R), 0.0, 1.0
-            ).astype(jnp.float32),
+            ).astype(EXPERIMENTS_DTYPE),
             data_dir=config["data_dir"],
         )
 
-        result, reconstructions = benchmark(key)
+        result, reconstructions = benchmark(key, dtype=EXPERIMENTS_DTYPE)
         # log reconstructions
         if config["save_reconstruction"]:
             save_reconstructions(
@@ -214,7 +216,7 @@ def t_css_pass(
             n_trials=config["n_trials"],
             decomposition_blackbox_fn=eqx.filter_jit(
                 lambda key, image: (
-                    M := TMatrix(image.astype(jnp.float32)),
+                    M := TMatrix(image.astype(EXPERIMENTS_DTYPE)),
                     Vt := t_rsvd(
                         key=key,
                         M=M,
@@ -231,11 +233,11 @@ def t_css_pass(
             ),
             reconstruction_blackbox_fn=lambda C, W, R: jnp.clip(
                 reconstruct_t_cross(C, W, R), 0.0, 1.0
-            ).astype(jnp.float32),
+            ).astype(EXPERIMENTS_DTYPE),
             data_dir=config["data_dir"],
         )
 
-        result, reconstructions = benchmark(key)
+        result, reconstructions = benchmark(key, dtype=EXPERIMENTS_DTYPE)
         # log reconstructions
         if save_reconstruction:
             save_reconstructions(

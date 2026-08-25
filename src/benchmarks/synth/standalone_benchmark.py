@@ -25,6 +25,26 @@ from t_arp.tubal import (
     t_rsvd,
     t_tsvd,
 )
+# enable float64 and complex128 in jax
+jax.config.update("jax_enable_x64", True)
+EXPERIMENTS_DTYPE = jnp.float64
+# jax.config.update("jax_enable_complex128", True)
+
+def _compute_relative_gaussian_noise(
+    key: chex.PRNGKey,
+    x: chex.Array,
+    relative_noise: float,
+) -> chex.Array:
+    """Add Gaussian noise with prescribed relative Frobenius norm.
+
+    The perturbation E is scaled so that
+        ||E||_F / ||X||_F = relative_noise.
+    """
+    noise = jax.random.normal(key, shape=x.shape)
+    noise_norm = jnp.linalg.norm(noise)
+    x_norm = jnp.linalg.norm(x)
+
+    return relative_noise * (x_norm / noise_norm) * noise
 
 
 @jax.jit(static_argnums=(1, 2, 3))
@@ -32,47 +52,61 @@ def construct_random_tmatrix(
     key: chex.PRNGKey,
     t_rank: int,
     t_shape: Tuple[int, ...],
-    eps: Optional[float],
+    relative_noise: Optional[float] = None,
 ) -> TMatrix:
     assert len(t_shape) > 2
 
     key_u, key_v, key_eps = jax.random.split(key, 3)
 
     u_shape = (t_shape[0], t_rank, *t_shape[2:])
-    U = jax.random.uniform(key_u, u_shape)
+    U = jax.random.uniform(key_u, u_shape, dtype=EXPERIMENTS_DTYPE)
 
     v_shape = (t_rank, *t_shape[1:])
-    V = jax.random.uniform(key_v, v_shape)
+    V = jax.random.uniform(key_v, v_shape, dtype=EXPERIMENTS_DTYPE)
 
-    if eps:
-        noise = eps * jax.random.normal(key_eps, t_shape)
-        M = TMatrix(U) @ TMatrix(V) + noise
-    else:
-        M = TMatrix(U) @ TMatrix(V)
+    M = TMatrix(U) @ TMatrix(V)
+
+    if relative_noise is not None and relative_noise > 0:
+        noise = _compute_relative_gaussian_noise(key=key_eps, x=M.data, relative_noise=relative_noise)
+        M = M + noise
 
     return M
 
 
-@jax.jit(static_argnums=(0, 1))
+@jax.jit(static_argnums=(1, 2, 3))
 def construct_function_tmatrix(
+    key: chex.PRNGKey,
     t_shape: Tuple[int, ...],
     p: float,
+    relative_noise: Optional[float] = None,
 ) -> TMatrix:
     assert len(t_shape) > 2
 
-    denom = jnp.zeros(t_shape)
-    for i in range(len(t_shape)):
-        vec = jnp.arange(t_shape[i]) + 1
-        shape = [t_shape[j] if j == i else 1 for j in range(len(t_shape))]
-        vec = vec.reshape(tuple(shape))
-        denom = denom + vec
-
-    denom = denom
-    denom = denom ** (1 / p)
-
-    M = TMatrix(1 / denom)
-
+    grids = jnp.ogrid[tuple(slice(1, d + 1) for d in t_shape)]
+    denom = sum(grids)
+    x = 1.0 / jnp.power(denom, 1.0 / p)
+    x = x.astype(EXPERIMENTS_DTYPE)
+    M = TMatrix(x)
+    if relative_noise is not None and relative_noise > 0:
+        noise = _compute_relative_gaussian_noise(key=key, x=M.data, relative_noise=relative_noise)
+        M = M + noise
     return M
+
+
+
+    # denom = jnp.zeros(t_shape)
+    # for i in range(len(t_shape)):
+    #     vec = jnp.arange(t_shape[i]) + 1
+    #     shape = [t_shape[j] if j == i else 1 for j in range(len(t_shape))]
+    #     vec = vec.reshape(tuple(shape))
+    #     denom = denom + vec
+
+    # denom = denom
+    # denom = denom ** (1 / p)
+
+    # M = TMatrix(1 / denom)
+
+    # return M
 
 
 @jax.jit(static_argnames=["method", "n_slices"])
@@ -98,7 +132,7 @@ def t_cross_helper(
     elif method == "leverage_scores":
         tcss_module_constructor = partial(TCSSBaselines, method="leverage_scores")
     else:
-        tcss_module_constructor = partial(TARP, method=method, use_derandomized=True)
+        tcss_module_constructor = partial(TARP, method=method, use_derandomized=False)
 
     key, subkey = jax.random.split(key)
 
@@ -113,7 +147,7 @@ def t_cross_helper(
 
     return C, W, R
 
-
+# @jax.jit(static_argnums=(1, 2, 3, 4, 5))
 def benchmark_synth(
     key: chex.PRNGKey,
     decomposition_blackbox_fn: Callable,
@@ -129,11 +163,17 @@ def benchmark_synth(
     def benchmark_fn(key):
         if benchmark_type == "function_tensor":
             return construct_function_tmatrix(
-                config["t_shape"], config["function_tensor_p"]
+                key=key,
+                t_shape=config["t_shape"],
+                p=config["function_tensor_p"],
+                relative_noise=config["relative_noise"],
             )
         else:
             return construct_random_tmatrix(
-                key, config["t_rank"], config["t_shape"], config["eps"]
+                key=key,
+                t_rank=config["t_rank"],
+                t_shape=config["t_shape"],
+                relative_noise=config["relative_noise"],
             )
 
     if is_deterministic:
@@ -197,14 +237,15 @@ def t_cur_pass(
         relative_error_batch = benchmark_synth(
             key=key,
             decomposition_blackbox_fn=eqx.filter_jit(
-                lambda M: (
+                lambda key, M: (
+                    keys := jax.random.split(key),
                     arp_params := ARP_params(rsvd_r=n_slices),
                     arp := arp_constr(r=n_slices, css_params=arp_params),
-                    CWR_tuple := t_cur(M, css_method=arp, key=key),
+                    CWR_tuple := t_cur(M, css_method=arp, key=keys[0]),
                 )[-1]
             ),
             reconstruction_blackbox_fn=reconstruct_t_cross,
-            is_deterministic=True,
+            is_deterministic=False,
             n_samples=config["n_trials"],
             benchmark_type=config["benchmark_type"],
         )
@@ -241,6 +282,10 @@ def t_css_pass(
                         n_oversamples=config["n_oversamples"],
                         n_subspace_iters=config["n_subspace_iters"],
                     )[-1],
+                    # Vt := t_tsvd(
+                    #     M=M,
+                    #     n_slices=n_slices,
+                    # )[-1],
                     V := Vt.T.create_t_matrix(),
                     t_cross_helper(
                         key=keys[1], M=M, V=V, method=method, n_slices=n_slices

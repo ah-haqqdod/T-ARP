@@ -64,6 +64,8 @@ python src/benchmarks/synth/standalone_benchmark.py
 
 ## YUV video dataset
 
+  This experiment requires `ffmpeg`
+
 Benchmarks common-index tubal cross-approximation methods on a raw YUV video. Requires `ffmpeg` on `PATH` to convert `.yuv` files to `.mp4`.
 
 **Run:**

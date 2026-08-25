@@ -177,9 +177,11 @@ def plot_ssim(df: Optional[pd.DataFrame], save_dir: str = "figures") -> None:
     save_path = os.path.join(save_dir, "ssim_plot.png")
     plt.savefig(save_path, bbox_inches="tight")
     print(f"SSIM plot saved to {save_path}")
-    # save_path = os.path.join(save_dir, "ssim_plot.tex")
-    # matplot2tikz.save(save_path)
-    # plt.close()
+
+    # .tex
+    save_path = os.path.join(save_dir, "ssim_plot.tex")
+    matplot2tikz.save(save_path)
+    plt.close()
 
 
 def plot_psnr(df: Optional[pd.DataFrame], save_dir: str = "figures") -> None:
@@ -207,9 +209,11 @@ def plot_psnr(df: Optional[pd.DataFrame], save_dir: str = "figures") -> None:
     save_path = os.path.join(save_dir, "psnr_plot.png")
     plt.savefig(save_path, bbox_inches="tight")
     print(f"PSNR plot saved to {save_path}")
-    # save_path = os.path.join(save_dir, "psnr_plot.tex")
-    # matplot2tikz.save(save_path)
-    # plt.close()
+
+    # .tex
+    save_path = os.path.join(save_dir, "psnr_plot.tex")
+    matplot2tikz.save(save_path)
+    plt.close()
 
 
 def plot_relative_error(df: Optional[pd.DataFrame], save_dir: str = "figures") -> None:
@@ -239,9 +243,11 @@ def plot_relative_error(df: Optional[pd.DataFrame], save_dir: str = "figures") -
     save_path = os.path.join(save_dir, "relative_error_plot.png")
     plt.savefig(save_path, bbox_inches="tight")
     print(f"Relative error plot saved to {save_path}")
-    # save_path = os.path.join(save_dir, "relative_error_plot.tex")
-    # matplot2tikz.save(save_path)
-    # plt.close()
+
+    # .tex
+    save_path = os.path.join(save_dir, "relative_error_plot.tex")
+    matplot2tikz.save(save_path)
+    plt.close()
 
 
 def plot_execution_time(df: Optional[pd.DataFrame], save_dir: str = "figures") -> None:
@@ -269,9 +275,11 @@ def plot_execution_time(df: Optional[pd.DataFrame], save_dir: str = "figures") -
     save_path = os.path.join(save_dir, "execution_time_plot.png")
     plt.savefig(save_path, bbox_inches="tight")
     print(f"Execution time plot saved to {save_path}")
-    # save_path = os.path.join(save_dir, "execution_time_plot.tex")
-    # matplot2tikz.save(save_path)
-    # plt.close()
+
+    # .tex
+    save_path = os.path.join(save_dir, "execution_time_plot.tex")
+    matplot2tikz.save(save_path)
+    plt.close()
 
 
 def plot_figures(

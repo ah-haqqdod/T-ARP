@@ -7,7 +7,7 @@ save_path: "src/benchmarks/synth/results/"
 
 # Random seed and trial count
 seed: 42
-n_trials: 1 # number of trials (randomised methods only)
+n_trials: 20 # number of trials (randomised methods only)
 
 # Tensor type and construction parameters
 # benchmark_type: "random_tensor" or "function_tensor"
@@ -15,7 +15,7 @@ n_trials: 1 # number of trials (randomised methods only)
 benchmark_type: "function_tensor"
 t_shape: [60, 60, 60] # dimensions of the 3D tensor (list -> tuple in code)
 t_rank: 7 # rank for random tensor (ignored for function_tensor)
-eps: 1.0e-6 # noise level for random tensor; set to null for no noise
+relative_noise: 1.0e-6 # ---
 function_tensor_p: 2 # exponent for function tensor (ignored for random_tensor)
 
 # Decomposition hyper‑parameters

@@ -4,10 +4,11 @@
 
 # Paths
 video_dir: "datasets/yuv_video/Video/"
+# video names : ["akiyo_qcif", "foreman_qcif", "news_qcif", "suzie_qcif",    "stefan_cif", "tempete_cif", "waterfall_cif"]
 video_name: "tempete_cif"
 save_path: "src/benchmarks/yuv/results/"
 
-# Video properties (Evaluated from "waterfall_cif")
+# Video properties
 # CIF have width 352 and height 288; QCIF have width 176 and height 144
 # If not specified, the shape will be determined from the .yuv video file suffix
 # width: 352
@@ -24,18 +25,30 @@ use_rsvd: true
 use_intersection: false
 
 # Data types
-dtype: "float32" # the type of the data used in computations
-data_dtype: "uint8" # the type of the raw video data
+dtype: "float32"   # type used in computations
+data_dtype: "uint8" # type of the raw video data
 
 # Benchmark parameters
-n_slices: [50] # YAML list
+n_slices: [40, 60, 80]
 
-# Methods to run (map of display name -> internal method identifier)
+# -------------------------------------------------------------------
+# Methods to evaluate
+# -------------------------------------------------------------------
+# The "methods" dictionary maps a human-readable name to the internal
+# identifier used by the benchmark logic. Only the methods whose names
+# appear in "active_methods" will be executed.
 methods:
+  "ARP T-CUR": "arp_t_cur"
   "Uniform": "uniform"
   "Leverage Scores": "leverage_scores"
   "T-ARP": "orth_proj_pinv"
   "T-ARP (Householder)": "householder"
 
-# Active methods mapping
-active_methods: ["Uniform", "Leverage Scores", "T-ARP (Householder)"]
+# List of display names to actually run.
+active_methods:
+  [
+    "ARP T-CUR",
+    "Uniform",
+    "Leverage Scores",
+    "T-ARP (Householder)",
+  ]
