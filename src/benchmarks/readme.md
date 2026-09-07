@@ -53,9 +53,11 @@ python src/benchmarks/synth/standalone_benchmark.py
 | `t_shape` | `[60, 60, 60]` | Tensor dimensions |
 | `function_tensor_p` | `2` | Decay exponent (function tensor only) |
 | `t_rank` | `7` | Rank (random tensor only) |
-| `eps` | `1e-6` | Noise level (random tensor only; `null` for none) |
+| `relative_noise` | `1e-6` | Relative Gaussian noise added to the generated tensor; `null` for none |
 | `n_slices` | `[2 … 22]` | Ranks to sweep |
-| `n_trials` | `1` | Samples averaged per rank |
+| `n_trials` | `20` | Samples averaged per rank |
+| `n_oversamples` | `5` | RSVD oversampling |
+| `n_subspace_iters` | `1` | RSVD subspace iterations |
 | `seed` | `42` | Global random seed |
 
 **Outputs** written to `save_path/<benchmark_type>/metrics/` — Parquet file for relative error.
@@ -63,8 +65,6 @@ python src/benchmarks/synth/standalone_benchmark.py
 ---
 
 ## YUV video dataset
-
-  This experiment requires `ffmpeg`
 
 Benchmarks common-index tubal cross-approximation methods on a raw YUV video. Requires `ffmpeg` on `PATH` to convert `.yuv` files to `.mp4`.
 
@@ -78,17 +78,23 @@ python src/benchmarks/yuv/standalone_benchmark.py
 | Key | Default | Description |
 |---|---|---|
 | `video_dir` | `datasets/yuv_video/Video/` | Directory containing `.yuv` files |
-| `video_name` | `tempete_cif` | Filename stem (without `.yuv`); suffix `_qcif` → 176×144, `_cif` → 352×288 |
+| `video_name` | `tempete_cif` | Filename stem (without `.yuv`); suffix `_qcif` → 176×144, `_cif` → 352×288 (override with `width`/`height`) |
 | `save_path` | `src/benchmarks/yuv/results/` | Output directory |
-| `n_slices` | `[50]` | Ranks to sweep |
+| `framerate` | `25` | Frame rate used when converting to `.mp4` |
+| `n_slices` | `[40, 60, 80]` | Ranks to sweep |
 | `n_trials` | `1` | Trials per rank |
 | `seed` | `42` | Global random seed |
+| `n_oversamples` | `5` | RSVD oversampling |
+| `n_subspace_iters` | `1` | RSVD subspace iterations |
 | `use_rsvd` | `true` | Use randomised SVD for basis computation |
 | `save_reconstructions` | `true` | Save `.yuv` and `.mp4` reconstructions |
+| `dtype` | `float32` | Data type used in computations |
+| `data_dtype` | `uint8` | Data type of the raw video data |
 
 **Outputs** written to `save_path`:
 - `metrics/` — Parquet files for SSIM, PSNR, relative error
-- `<method>/rec_<n_slices>.yuv` and `.mp4` reconstructions (if enabled)
+- `<method>/rec_<n_slices>.yuv` and `<method>/<video_name>_<n_slices>.mp4` — reconstructions (if enabled)
+- `<video_name>_org.mp4` — original video converted to `.mp4` (written to `save_path`)
 
 ---
 
