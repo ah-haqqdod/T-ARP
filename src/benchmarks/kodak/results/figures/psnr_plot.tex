@@ -1,0 +1,110 @@
+% This file was created with matplot2tikz v0.5.4.
+\begin{tikzpicture}
+
+\definecolor{crimson2143940}{RGB}{214,39,40}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange25512714}{RGB}{255,127,14}
+\definecolor{forestgreen4416044}{RGB}{44,160,44}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{mediumpurple148103189}{RGB}{148,103,189}
+\definecolor{orchid227119194}{RGB}{227,119,194}
+\definecolor{sienna1408675}{RGB}{140,86,75}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+title={Peak Signal‑to‑Noise Ratio (PSNR) – Higher is better},
+x grid style={darkgray176},
+xlabel={# Slices},
+xmajorgrids,
+xmin=5.5, xmax=104.5,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={PSNR (dB)},
+ymajorgrids,
+ymin=17.7042818431961, ymax=32.2673972012843,
+ytick style={color=black}
+]
+\addplot [thick, steelblue31119180, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 19.0180056970953
+20 20.8421286614876
+40 22.7791543162373
+60 24.0637875781074
+80 25.2665552443878
+100 26.1897226124334
+};
+\addlegendentry{ARP T-CUR}
+\addplot [thick, darkorange25512714, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 22.9067511597666
+20 24.8253412999205
+40 27.1423579307737
+60 28.8302777884521
+80 30.2778173827698
+100 31.6054374122803
+};
+\addlegendentry{T-SVD}
+\addplot [thick, forestgreen4416044, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 18.3662416322001
+20 20.1182959636792
+40 21.9808643109481
+60 23.063479119885
+80 24.1197132014432
+100 25.0450812803085
+};
+\addlegendentry{T Uniform Sampling}
+\addplot [thick, crimson2143940, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 18.5976187399001
+20 20.1502821253142
+40 21.8669568505643
+60 23.1045151598978
+80 24.1080839799737
+100 25.0452131366168
+};
+\addlegendentry{T Lengths Squared Sampling}
+\addplot [thick, mediumpurple148103189, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 18.7095300192077
+20 20.2018900072356
+40 22.0799334054492
+60 23.4321751207842
+80 24.5213990622971
+100 25.5060771772351
+};
+\addlegendentry{T Leverage Scores Sampling}
+\addplot [thick, sienna1408675, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 18.5675172983283
+20 20.6799291242019
+40 22.3802049555358
+60 23.8951743011135
+80 24.9886514605087
+100 25.9316678347181
+};
+\addlegendentry{T-ARP}
+\addplot [thick, orchid227119194, mark=square*, mark size=2, mark options={solid}]
+table {%
+10 18.5675172983283
+20 20.6799291242019
+40 22.3802049555358
+60 23.8951743011135
+80 24.9886514605087
+100 25.9316678347181
+};
+\addlegendentry{T-ARP (Householder)}
+\end{axis}
+
+\end{tikzpicture}
