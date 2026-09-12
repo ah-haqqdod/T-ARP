@@ -6,7 +6,7 @@ T-ARP provides efficient algorithms for common-index tensor cross-approximation 
 
 ![](assets/t_cross.png)
 
-This repository contains the source code for T-ARP, and the experiments to reproduce the results in the paper, "Adaptive Randomized Pivoting for Tensor Singular Value Decomposition Model" by Ahmadsho Akdodshoev, Valentin Leplat and Salman Ahmadi-Asl. https://arxiv.org/abs/2606.26688.
+This repository contains the source code for T-ARP, and the experiments to reproduce the results in the paper, "Adaptive Randomized Pivoting for Tensor Cross Approximation in the T-Product Framework" by Ahmadsho Akdodshoev, Valentin Leplat and Salman Ahmadi-Asl. https://arxiv.org/abs/2606.26688.
 
 ## installation
 
