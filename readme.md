@@ -1,4 +1,4 @@
-# Adaptive Randomized Pivoting for Tensor Singular Value Decomposition Model
+# Adaptive Randomized Pivoting for Tensor Cross Approximation in the T-Product Framework
 
 ## Overview
 
